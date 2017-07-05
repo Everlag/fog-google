@@ -1,0 +1,23 @@
+jobs:
+  - name: run-int
+    plan:
+      - aggregate:
+        - {
+#            trigger: true, passed: [run-fast-int],
+            get: fog-google-src, resource: fog-google-src-in
+          }
+
+      - task: full-integration-tests
+        file: fog-google-src/ci/tasks/run-int.yml
+        params:
+          google_project: {{google_project}}
+          google_json_key_data: {{google_json_key_data}}
+          google_client_email: {{google_client_email}}
+
+
+resources:
+  - name: fog-google-src-in
+    type: git
+    source:
+      uri: https://github.com/Everlag/fog-google-tests.git
+      branch: ci-dev
