@@ -8,3 +8,5 @@ google_json_key_data: |
 
 # An access token with repo:status access
 github_access_token:
+# A SSH private key associated with the access token's account
+github_private_key: |

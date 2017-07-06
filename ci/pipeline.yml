@@ -3,7 +3,6 @@ jobs:
     plan:
       - aggregate:
         - {
-#            trigger: true, passed: [run-fast-int],
             get: fog-google-src, resource: fog-google-src-in
           }
 
@@ -16,10 +15,12 @@ jobs:
 
   - name: pr-int
     plan:
-      - aggregate:
-        - {
-            get: fog-google-src, resource: pull-requests, version: every
-          }
+      - get: fog-google-src
+        resource: pull-request
+        version: every
+        trigger: true
+      - put: pull-request
+        params: {path: fog-google-src, status: pending}
 
       - task: full-integration-tests
         file: fog-google-src/ci/tasks/run-int.yml
@@ -27,33 +28,16 @@ jobs:
           google_project: {{google_project}}
           google_json_key_data: {{google_json_key_data}}
           google_client_email: {{google_client_email}}
-
-
-#  - name: pr
-#    plan:
-#      - get: git-pull-requests
-#        trigger: true
-#        version: every
-#      - task: run-int
-#        file: fog-google-src/ci/tasks/run-int.yml
-#        params:
-#          google_project: {{google_project}}
-#          google_json_key_data: {{google_json_key_data}}
-#          google_client_email: {{google_client_email}}
-#          config:
-#            inputs:
-#              - name: git-pull-requests
-##          on_success:
-##            put: git-pull-requests
-##            params:
-##              path: git-pull-requests
-##              status: success
-##          on_failure:
-##            put: git-pull-requests
-##            params:
-##              path: git-pull-requests
-##              status: failure
-
+        on_success:
+          put: pull-request
+          params:
+            path: fog-google-src
+            status: success
+        on_failure:
+          put: pull-request
+          params:
+            path: fog-google-src
+            status: failure
 
 resources:
   - name: fog-google-src-in
@@ -61,12 +45,13 @@ resources:
     source:
       uri: https://github.com/Everlag/fog-google-tests.git
       branch: ci-dev
-  - name: pull-requests
+  - name: pull-request
     type: pull-request
     source:
       access_token: {{github_access_token}}
+      private_key: {{github_private_key}}
+      label: integrate
       repo: Everlag/fog-google-tests
-      base: pr1-pubsub
 
 resource_types:
   - name: pull-request
