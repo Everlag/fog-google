@@ -1,5 +1,5 @@
 jobs:
-  - name: run-int
+  - name: base-int
     plan:
       - aggregate:
         - {
@@ -14,6 +14,46 @@ jobs:
           google_json_key_data: {{google_json_key_data}}
           google_client_email: {{google_client_email}}
 
+  - name: pr-int
+    plan:
+      - aggregate:
+        - {
+            get: fog-google-src, resource: pull-requests, version: every
+          }
+
+      - task: full-integration-tests
+        file: fog-google-src/ci/tasks/run-int.yml
+        params:
+          google_project: {{google_project}}
+          google_json_key_data: {{google_json_key_data}}
+          google_client_email: {{google_client_email}}
+
+
+#  - name: pr
+#    plan:
+#      - get: git-pull-requests
+#        trigger: true
+#        version: every
+#      - task: run-int
+#        file: fog-google-src/ci/tasks/run-int.yml
+#        params:
+#          google_project: {{google_project}}
+#          google_json_key_data: {{google_json_key_data}}
+#          google_client_email: {{google_client_email}}
+#          config:
+#            inputs:
+#              - name: git-pull-requests
+##          on_success:
+##            put: git-pull-requests
+##            params:
+##              path: git-pull-requests
+##              status: success
+##          on_failure:
+##            put: git-pull-requests
+##            params:
+##              path: git-pull-requests
+##              status: failure
+
 
 resources:
   - name: fog-google-src-in
@@ -21,3 +61,15 @@ resources:
     source:
       uri: https://github.com/Everlag/fog-google-tests.git
       branch: ci-dev
+  - name: pull-requests
+    type: pull-request
+    source:
+      access_token: {{github_access_token}}
+      repo: Everlag/fog-google-tests
+      base: pr1-pubsub
+
+resource_types:
+  - name: pull-request
+    type: docker-image
+    source:
+      repository: jtarchie/pr
