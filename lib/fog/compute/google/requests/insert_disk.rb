@@ -3,65 +3,18 @@ module Fog
     class Google
       class Mock
         def insert_disk(disk_name, zone_name, image_name = nil, options = {})
-          # check that image and zone exist
-          image = nil
-          if image_name
-            image = images.get(image_name)
-            raise ArgumentError.new("Invalid image specified: #{image_name}") unless image
-          end
-          get_zone(zone_name)
-
-          id = Fog::Mock.random_numbers(19).to_s
-          object = {
-            "kind" => "compute#disk",
-            "id" => id,
-            "creationTimestamp" => Time.now.iso8601,
-            "zone" => "https://www.googleapis.com/compute/#{api_version}/projects/#{@project}/zones/#{zone_name}",
-            "status" => "READY",
-            "name" => disk_name,
-            "sizeGb" => options["sizeGb"] || "10",
-            "selfLink" => "https://www.googleapis.com/compute/#{api_version}/projects/#{@project}/zones/#{zone_name}/disks/#{disk_name}"
-          }
-          if image
-            object.merge("sourceImage" => image.self_link,
-                         "sourceImageId" => image.id)
-          end
-          data[:disks][disk_name] = object
-
-          if image
-            object.merge!("sourceImage" => image.self_link,
-                          "sourceImageId" => image.id)
-          end
-          if disk_type = options.delete(:type)
-            object["type"] = type
-          else
-            object["type"] = "https://www.googleapis.com/compute/#{api_version}/projects/#{@project}/zones/#{zone_name}/diskTypes/pd-standard"
-          end
-          data[:disks][disk_name] = object
-
-          operation = random_operation
-          data[:operations][operation] = {
-            "kind" => "compute#operation",
-            "id" => Fog::Mock.random_numbers(19).to_s,
-            "name" => operation,
-            "zone" => object["zone"],
-            "operationType" => "insert",
-            "targetLink" => object["selfLink"],
-            "targetId" => id,
-            "status" => Fog::Compute::Google::Operation::PENDING_STATE,
-            "user" => "123456789012-qwertyuiopasdfghjkl1234567890qwe@developer.gserviceaccount.com",
-            "progress" => 0,
-            "insertTime" => Time.now.iso8601,
-            "startTime" => Time.now.iso8601,
-            "selfLink" => "#{object['zone']}/operations/#{operation}"
-          }
-
-          build_excon_response(data[:operations][operation])
+          Fog::Mock.not_implemented
         end
       end
 
       class Real
         def insert_disk(disk_name, zone_name, image_name = nil, opts = {})
+          disk = ::Google::Apis::ComputeV1::Disk.new(
+            :name => address_name,
+            :description => options[:description]
+          )
+          @compute.insert_disk(@project, zone_name, )
+
           api_method = @compute.disks.insert
           parameters = {
             "project" => @project,
